@@ -1,6 +1,6 @@
-//#include <OneWire.h>
-//#include <Servo.h>
-//#include "DHT.h"
+#include <Servo.h>
+#include "OneWire.h"
+#include "DHT.h"
 
 #define DHTPIN 8
 #define DHTTYPE DHT22
@@ -66,7 +66,7 @@ void loop() {
   
   getTemperatureButton();
   getTemperatureTop();
-  getServo();
+  climatControl();
  
    
 }
@@ -133,7 +133,7 @@ void Relay(){
 
 }
 
-void getTemperatureButton() {
+int getTemperatureButton() {
 
   //float h = dht.readHumidity(); //Измеряем влажность
   float t = dht.readTemperature(); //Измеряем температуру
@@ -145,10 +145,11 @@ void getTemperatureButton() {
   Serial.print("Нижняя Температура: ");
   Serial.print(t);
   Serial.println(" *C ");
+  return t;
 
 }
 
-void getTemperatureTop() {
+int getTemperatureTop() {
    byte data[2]; // Место для значения температуры
   
   ds.reset(); // Начинаем взаимодействие со сброса всех предыдущих команд и параметров
@@ -168,16 +169,40 @@ void getTemperatureTop() {
   // Формируем итоговое значение: 
   //    - сперва "склеиваем" значение, 
   //    - затем умножаем его на коэффициент, соответсвующий разрешающей способности (для 12 бит по умолчанию - это 0,0625)
-  float temperature =  ((data[1] << 8) | data[0]) * 0.0625;
+  float t =  ((data[1] << 8) | data[0]) * 0.0625;
   
   // Выводим полученное значение температуры в монитор порта
   Serial.print("Верхняя Температура: ");
-  Serial.print(temperature);
+  Serial.print(t);
   Serial.println(" *C ");
+  return t;
 
 }
 
-void getServo(){
+void climatControl() {
+  int tTop = getTemperatureTop();
+  int tButton = getTemperatureButton();
+
+  if (tTop >= tButton+2){digitalWrite(pinRL_Fan2, LOW);  }
+  else {digitalWrite(pinRL_Fan2, HIGH);}
+
+  if (tTop > 42){
+    digitalWrite(pinRL_Fan1, LOW);
+    getServo(1);
+  }
+  else {
+    digitalWrite(pinRL_Fan1, HIGH);
+    getServo(0);
+  }
+
+  if (tButton < 15) {digitalWrite(pinRL_Heat, LOW);}
+  else {digitalWrite(pinRL_Heat, HIGH);}
+  
+  
+
+}
+
+int getServo(int staus){
 
   servo.write(0); //ставим вал под 0
 
