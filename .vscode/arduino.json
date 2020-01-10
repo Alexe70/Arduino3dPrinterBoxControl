@@ -2,5 +2,5 @@
     "board": "arduino:avr:uno",
     "programmer": "AVR ISP",
     "sketch": "3dBoxControl.ino",
-    "port": "COM5"
+    "port": "COM4"
 }

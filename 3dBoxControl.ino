@@ -2,45 +2,46 @@
 #include "OneWire.h"
 #include "DHT.h"
 
-#define DHTPIN 8
-#define DHTTYPE DHT22
-DHT dht(DHTPIN, DHTTYPE);
+#define DHTPIN 8          //пин для температурного датчика DH22 (верх)
+#define DHTTYPE DHT22     //инициализация датчика DH22
+DHT dht(DHTPIN, DHTTYPE); //инициализация датчика DH22
 
-OneWire ds(9);
-Servo servo;
+OneWire ds(9);            //пин для температурного датчика DS18b20 (низ)
+
+Servo servo;              //инициализация серво привода
 
 String relayCommand = ""; // Команды от OctoPrint для включения\выключения модуля реле
 boolean recievedFlag;     // Флаг для обработки команд relayCommand
 
-String Relay_3dPrinterOn = "RL_PR_ON\n";
-String Relay_3dPrinterOff = "RL_PR_OFF\n";
-String Relay_Fan1On = "RL_FAN1_ON\n";
-String Relay_Fan1Off = "RL_FAN1_OFF\n";
-String Relay_Fan2On = "RL_FAN2_ON\n";
-String Relay_Fan2Off = "RL_FAN2_OFF\n";
-String Relay_LedOn = "RL_LED_ON\n";
-String Relay_LedOff = "RL_LED_OFF\n";
-String Relay_HeatOn = "RL_HEAT_ON\n";
-String Relay_HeatOff = "RL_HEAT_OFF\n";
-String Relay_PwrOn = "RL_PW_ON\n";
-String Relay_PwrOff =  "RL_PW_OFF\n";
+String Relay_3dPrinterOn = "RL_PR_ON";    //включить принтер
+String Relay_3dPrinterOff = "RL_PR_OFF";  //выключить принтер
+String Relay_Fan1On = "RL_FAN1_ON";       //включить выдувной вентилятор
+String Relay_Fan1Off = "RL_FAN1_OFF";     //выключить выдувной вентилятор
+String Relay_Fan2On = "RL_FAN2_ON";       //включить вентилятор циркуляции
+String Relay_Fan2Off = "RL_FAN2_OFF";     //выключить вентилятор циркуляции
+String Relay_LedOn = "RL_LED_ON";         //включить подсветку
+String Relay_LedOff = "RL_LED_OFF";       //выключить подстветку
+String Relay_HeatOn = "RL_HEAT_ON";       //включить обогрев
+String Relay_HeatOff = "RL_HEAT_OFF";     //выключить обогрев
+String Relay_PwrOn = "RL_PW_ON";          //включить БП 12В
+String Relay_PwrOff =  "RL_PW_OFF";       //выключить БП 12B
 
-String TemperatureButtonGet =  "TMP_BUTTON\n";
-String TemperatureTopGet =  "TMP_TOP\n";
+String TemperatureButtonGet =  "TMP_BUTTON";  //получить значение нижней температуры
+String TemperatureTopGet =  "TMP_TOP";        //получить значение верхней температуры
 
-int pinRL_3dPrint = 2;
-int pinRL_Fan1 = 3;
-int pinRL_Fan2 = 4;
-int pinRL_Led = 5;
-int pinRL_Heat = 6;
-int pinRL_PWR = 7;
+int pinRL_3dPrint = 2;                    //пин реле принтера - 220 В
+int pinRL_Fan1 = 3;                       //пин реле вентилятора выдува - 12 В
+int pinRL_Fan2 = 4;                       //пин реле вентилятора циркуляции - 12 В
+int pinRL_Led = 5;                        //пин реле подсветки - 12 В
+int pinRL_Heat = 6;                       //пин реле обогрева - 220 В
+int pinRL_PWR = 7;                        //пин реле БП 12В - 220 В
 
 
 void setup() {
   
   Serial.begin(9600);
   dht.begin();
-  servo.attach(10);
+  servo.attach(10);                       //пин сервопривода
   
   pinMode(pinRL_3dPrint, OUTPUT);
   pinMode(pinRL_Fan1, OUTPUT);
@@ -60,97 +61,108 @@ void setup() {
 
 void loop() {
 
-  if (Serial.available()) {Relay();}
-  
-  delay(2000); // 2 секунды задержки
-  
-  getTemperatureButton();
-  getTemperatureTop();
-  climatControl();
- 
-   
+  if (Serial.available()) { //Слушаем команды от OctoPrint
+    ReadUART();             
+  }
+
+  climatControl();          //Проверяем температуру, контролируем климат.
+     
 }
 
-void Relay(){
-
-  while (Serial.available() > 0) {         // ПОКА есть что то на вход    
-    relayCommand += (char)Serial.read();        // забиваем строку принятыми данными
+void ReadUART(){
+    while (Serial.available() > 0) {         // ПОКА есть что то на вход    
+    relayCommand += (char)Serial.read();   // забиваем строку принятыми данными
     recievedFlag = true;                   // поднять флаг что получили данные
     delay(2);                              // ЗАДЕРЖКА. Без неё работает некорректно!
-  }
 
-  if (recievedFlag) {                      // если данные получены
-    if (relayCommand == Relay_3dPrinterOn) {
-      digitalWrite(pinRL_3dPrint, LOW);
-    }
-    if (relayCommand == Relay_3dPrinterOff) {
-      digitalWrite(pinRL_3dPrint, HIGH);
-    }
-    
-    if (relayCommand == Relay_Fan1On) {
-      digitalWrite(pinRL_Fan1, LOW);
-    }
-    
-    if (relayCommand == Relay_Fan1Off) {
-      digitalWrite(pinRL_Fan1, HIGH); 
-    }
-
-    if (relayCommand == Relay_Fan2On) {
-      digitalWrite(pinRL_Fan2, LOW);
-    }
-    
-    if (relayCommand == Relay_Fan2Off) {
-      digitalWrite(pinRL_Fan2, HIGH);
-    }
-
-    if (relayCommand == Relay_LedOn) {
-      digitalWrite(pinRL_Led, LOW);
-    }
-    
-    if (relayCommand == Relay_LedOff) {
-      digitalWrite(pinRL_Led, HIGH);
-    }
-
-    if (relayCommand == Relay_HeatOn) {
-      digitalWrite(pinRL_Heat, LOW);
-    }
-    
-    if (relayCommand == Relay_HeatOff) {
-      digitalWrite(pinRL_Heat, HIGH);
-    }
-
-    if (relayCommand == Relay_PwrOn) {
-      digitalWrite(pinRL_PWR, LOW);
-    }
-    
-    if (relayCommand == Relay_PwrOff) {
-      digitalWrite(pinRL_PWR, HIGH);
-    }
-    Serial.println(relayCommand);
-  }
+    if (recievedFlag) {                    // Если в буфере что-то есть
+      if(relayCommand.substring(0,2) == "RL") { // Если команда начинается на 'RL' запускаем функцию управления реле
+        RelayControll(relayCommand);
+      }
     relayCommand = "";                          // очистить
     recievedFlag = false;                  // опустить флаг
-
+    }
+  }
 }
 
-int getTemperatureButton() {
-
-  //float h = dht.readHumidity(); //Измеряем влажность
-  float t = dht.readTemperature(); //Измеряем температуру
-  if (isnan(t)) {  // Проверка. Если не удается считать показания, выводится «Ошибка считывания», и программа завершает работу
-    Serial.println("Ошибка считывания");
-    return;
+void RelayControll(String command){
+  if (command == Relay_3dPrinterOn) {
+    digitalWrite(pinRL_3dPrint, LOW);    // Включить принтер
   }
-  
-  Serial.print("Нижняя Температура: ");
-  Serial.print(t);
-  Serial.println(" *C ");
-  return t;
+  if (command == Relay_3dPrinterOff) {
+    digitalWrite(pinRL_3dPrint, HIGH);   //выключить принтер
+  }
+  if (command == Relay_Fan1On) {
+    digitalWrite(pinRL_Fan1, LOW);      //включить выдув
+  }
+  if (command == Relay_Fan1Off) {
+    digitalWrite(pinRL_Fan1, HIGH); 
+  }
+  if (command == Relay_Fan2On) {
+    digitalWrite(pinRL_Fan2, LOW);
+  }
+  if (command == Relay_Fan2Off) {
+    digitalWrite(pinRL_Fan2, HIGH);
+  }
+  if (command == Relay_LedOn) {
+    digitalWrite(pinRL_Led, LOW);
+  }
+  if (command == Relay_LedOff) {
+    digitalWrite(pinRL_Led, HIGH);
+  }
+  if (command == Relay_HeatOn) {
+    digitalWrite(pinRL_Heat, LOW);
+  }
+  if (command == Relay_HeatOff) {
+      digitalWrite(pinRL_Heat, HIGH);
+  }
+  if (command == Relay_PwrOn) {
+    digitalWrite(pinRL_PWR, LOW);
+  }
+  if (command == Relay_PwrOff) {
+    digitalWrite(pinRL_PWR, HIGH);
+  }
+}
 
+void climatControl() {
+  int tTop = getTemperatureTop();
+  int tButton = getTemperatureButton();
+
+  if (tTop >= tButton+2){
+    RelayControll(Relay_Fan2On);  
+  }
+  else {
+    RelayControll(Relay_Fan2Off);
+  }
+
+  if (tTop > 42){
+    RelayControll(Relay_Fan1On);
+    getServo(1);
+  }
+  if (tTop < 39) {
+    RelayControll(Relay_Fan1Off);
+    getServo(0);
+  }
+
+  if (tButton < 12) {
+    RelayControll(Relay_HeatOn);
+  }
+  if (tButton > 15) {
+    RelayControll(Relay_HeatOff);
+  }
 }
 
 int getTemperatureTop() {
-   byte data[2]; // Место для значения температуры
+  //float h = dht.readHumidity(); //Измеряем влажность
+  float t = dht.readTemperature(); //Измеряем температуру
+  if (isnan(t)) {  // Проверка. Если не удается считать показания, возращается значение 1000
+    return 1000;
+  }
+  return t;        // Отдаем значение температуры
+}
+
+int getTemperatureButton() {
+  byte data[2]; // Место для значения температуры
   
   ds.reset(); // Начинаем взаимодействие со сброса всех предыдущих команд и параметров
   ds.write(0xCC); // Даем датчику DS18b20 команду пропустить поиск по адресу. В нашем случае только одно устрйоство 
@@ -171,35 +183,10 @@ int getTemperatureTop() {
   //    - затем умножаем его на коэффициент, соответсвующий разрешающей способности (для 12 бит по умолчанию - это 0,0625)
   float t =  ((data[1] << 8) | data[0]) * 0.0625;
   
-  // Выводим полученное значение температуры в монитор порта
-  Serial.print("Верхняя Температура: ");
-  Serial.print(t);
-  Serial.println(" *C ");
+  if (isnan(t)) {  // Проверка. Если не удается считать показания, возращается значение 1000
+    return 1000;
+  }
   return t;
-
-}
-
-void climatControl() {
-  int tTop = getTemperatureTop();
-  int tButton = getTemperatureButton();
-
-  if (tTop >= tButton+2){digitalWrite(pinRL_Fan2, LOW);  }
-  else {digitalWrite(pinRL_Fan2, HIGH);}
-
-  if (tTop > 42){
-    digitalWrite(pinRL_Fan1, LOW);
-    getServo(1);
-  }
-  else {
-    digitalWrite(pinRL_Fan1, HIGH);
-    getServo(0);
-  }
-
-  if (tButton < 15) {digitalWrite(pinRL_Heat, LOW);}
-  else {digitalWrite(pinRL_Heat, HIGH);}
-  
-  
-
 }
 
 int getServo(int staus){
