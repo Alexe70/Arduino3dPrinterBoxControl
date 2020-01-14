@@ -70,14 +70,16 @@ void loop() {
 
 void ReadUART(){
   while (Serial.available() > 0) {         // ПОКА есть что то на вход    
-    delay(2);                              // ЗАДЕРЖКА. Без неё работает некорректно!
+    delay(500);                              // ЗАДЕРЖКА. Без неё работает некорректно!
     relayCommand += (char)Serial.read();   // забиваем строку принятыми данными
     recievedFlag = true;                   // поднять флаг что получили данные
   }
 
   if (recievedFlag) {                    // Если в буфере что-то есть
+    int lenString =  relayCommand.length();    // выясняем длину команды
+    relayCommand = relayCommand.substring(0,lenString-2); // отрезаем последние спец символы
     if(relayCommand.substring(0,2) == "RL") { // Если команда начинается на 'RL' запускаем функцию управления реле
-        RelayControll(relayCommand);
+        RelayControll(relayCommand); 
     }
     relayCommand = "";                          // очистить
     recievedFlag = false;                  // опустить флаг
