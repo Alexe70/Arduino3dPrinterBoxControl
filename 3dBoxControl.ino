@@ -1,6 +1,6 @@
-#include <Servo.h>
-#include "OneWire.h"
-#include "DHT.h"
+#include <Servo.h>        //Библиотека для сервопривода
+#include "OneWire.h"      //Библиотека для DS18b20
+#include "DHT.h"          //Библиотека для DH22
 
 #define DHTPIN 8          //пин для температурного датчика DH22 (верх)
 #define DHTTYPE DHT22     //инициализация датчика DH22
@@ -15,7 +15,7 @@ boolean recievedFlag;     // Флаг для обработки команд rel
 
 String Relay_3dPrinterOn = "RL_PR_ON";    //включить принтер
 String Relay_3dPrinterOff = "RL_PR_OFF";  //выключить принтер
-String Relay_Fan1On = "RL_FAN1_ON";       //включить выдувной вентилятор
+String Relay_Fan1On = "RL_FAN1_ON";       //включить выдувной вентилятор  
 String Relay_Fan1Off = "RL_FAN1_OFF";     //выключить выдувной вентилятор
 String Relay_Fan2On = "RL_FAN2_ON";       //включить вентилятор циркуляции
 String Relay_Fan2Off = "RL_FAN2_OFF";     //выключить вентилятор циркуляции
@@ -36,12 +36,11 @@ int pinRL_Led = 5;                        //пин реле подсветки -
 int pinRL_Heat = 6;                       //пин реле обогрева - 220 В
 int pinRL_PWR = 7;                        //пин реле БП 12В - 220 В
 
-
 void setup() {
   
-  Serial.begin(9600);
-  dht.begin();
-  servo.attach(10);                       //пин сервопривода
+  Serial.begin(9600);                     //включаем UART
+  dht.begin();                            //Включаем датчик DH22
+  servo.attach(10);                       //устанавливаем пин сервопривода
   
   pinMode(pinRL_3dPrint, OUTPUT);
   pinMode(pinRL_Fan1, OUTPUT);
@@ -70,18 +69,18 @@ void loop() {
 }
 
 void ReadUART(){
-    while (Serial.available() > 0) {         // ПОКА есть что то на вход    
+  while (Serial.available() > 0) {         // ПОКА есть что то на вход    
+    delay(2);                              // ЗАДЕРЖКА. Без неё работает некорректно!
     relayCommand += (char)Serial.read();   // забиваем строку принятыми данными
     recievedFlag = true;                   // поднять флаг что получили данные
-    delay(2);                              // ЗАДЕРЖКА. Без неё работает некорректно!
+  }
 
-    if (recievedFlag) {                    // Если в буфере что-то есть
-      if(relayCommand.substring(0,2) == "RL") { // Если команда начинается на 'RL' запускаем функцию управления реле
+  if (recievedFlag) {                    // Если в буфере что-то есть
+    if(relayCommand.substring(0,2) == "RL") { // Если команда начинается на 'RL' запускаем функцию управления реле
         RelayControll(relayCommand);
-      }
+    }
     relayCommand = "";                          // очистить
     recievedFlag = false;                  // опустить флаг
-    }
   }
 }
 
