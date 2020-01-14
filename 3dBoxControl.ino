@@ -70,7 +70,7 @@ void loop() {
 
 void ReadUART(){
   while (Serial.available() > 0) {         // ПОКА есть что то на вход    
-    delay(500);                              // ЗАДЕРЖКА. Без неё работает некорректно!
+    delay(50);                              // ЗАДЕРЖКА. Без неё работает некорректно!
     relayCommand += (char)Serial.read();   // забиваем строку принятыми данными
     recievedFlag = true;                   // поднять флаг что получили данные
   }
