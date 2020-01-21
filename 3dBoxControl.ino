@@ -26,6 +26,10 @@ String Relay_HeatOff = "RL_HEAT_OFF";     //выключить обогрев
 String Relay_PwrOn = "RL_PW_ON";          //включить БП 12В
 String Relay_PwrOff =  "RL_PW_OFF";       //выключить БП 12B
 
+bool fan1Custom = false;                  //Ручное управление выдувом
+bool fan2Custom = false;                  //Ручное управление циркуляцией
+bool heatCustom = false;                  //Ручное управление обогревом
+
 String TemperatureButtonGet =  "TMP_BUTTON";  //получить значение нижней температуры
 String TemperatureTopGet =  "TMP_TOP";        //получить значение верхней температуры
 
@@ -95,15 +99,19 @@ void RelayControll(String command){
   }
   if (command == Relay_Fan1On) {
     digitalWrite(pinRL_Fan1, LOW);      //включить выдув
+    fan1Custom = true; 
   }
   if (command == Relay_Fan1Off) {
-    digitalWrite(pinRL_Fan1, HIGH); 
+    digitalWrite(pinRL_Fan1, HIGH);
+    fan1Custom = false;  
   }
   if (command == Relay_Fan2On) {
     digitalWrite(pinRL_Fan2, LOW);
+    fan1Custom = true; 
   }
   if (command == Relay_Fan2Off) {
     digitalWrite(pinRL_Fan2, HIGH);
+    fan1Custom = false; 
   }
   if (command == Relay_LedOn) {
     digitalWrite(pinRL_Led, LOW);
@@ -113,9 +121,11 @@ void RelayControll(String command){
   }
   if (command == Relay_HeatOn) {
     digitalWrite(pinRL_Heat, LOW);
+    heatCustom = false; 
   }
   if (command == Relay_HeatOff) {
       digitalWrite(pinRL_Heat, HIGH);
+      heatCustom = false; 
   }
   if (command == Relay_PwrOn) {
     digitalWrite(pinRL_PWR, LOW);
@@ -129,27 +139,33 @@ void climatControl() {
   int tTop = getTemperatureTop();
   int tButton = getTemperatureButton();
 
-  if (tTop >= tButton+2){
-    RelayControll(Relay_Fan2On);  
-  }
-  else {
-    RelayControll(Relay_Fan2Off);
-  }
-
-  if (tTop > 42){
-    RelayControll(Relay_Fan1On);
-    getServo(1);
-  }
-  if (tTop < 39) {
-    RelayControll(Relay_Fan1Off);
-    getServo(0);
+  if (!fan2Custom) {
+    if (tTop >= tButton+2){
+      RelayControll(Relay_Fan2On);  
+    }
+    else {
+      RelayControll(Relay_Fan2Off);
+    }
   }
 
-  if (tButton < 12) {
-    RelayControll(Relay_HeatOn);
+  if (!fan1Custom) {
+    if (tTop > 42){
+      RelayControll(Relay_Fan1On);
+      getServo(1);
+    }
+    if (tTop < 39) {
+      RelayControll(Relay_Fan1Off);
+      getServo(0);
+    }
   }
-  if (tButton > 15) {
-    RelayControll(Relay_HeatOff);
+
+  if (!heatCustom) {
+    if (tButton < 12) {
+      RelayControll(Relay_HeatOn);
+    }
+    if (tButton > 15) {
+      RelayControll(Relay_HeatOff);
+    }
   }
 }
 
