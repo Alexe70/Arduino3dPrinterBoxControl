@@ -83,7 +83,10 @@ void ReadUART(){
     int lenString =  relayCommand.length();    // выясняем длину команды
     relayCommand = relayCommand.substring(0,lenString-2); // отрезаем последние спец символы
     if(relayCommand.substring(0,2) == "RL") { // Если команда начинается на 'RL' запускаем функцию управления реле
-        RelayControll(relayCommand); 
+      RelayControll(relayCommand); 
+    }
+    if(relayCommand.substring(0,3) == "TMP") { //Если поступил запрос на температуру
+      Serial.print(getTemperatureTop());       //Отдаем в порт значенеие температуры
     }
     relayCommand = "";                          // очистить
     recievedFlag = false;                  // опустить флаг
